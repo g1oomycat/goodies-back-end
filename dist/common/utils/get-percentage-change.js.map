@@ -1,0 +1,1 @@
+{"version":3,"file":"get-percentage-change.js","sourceRoot":"","sources":["../../../src/common/utils/get-percentage-change.ts"],"names":[],"mappings":";;;AAAO,MAAM,mBAAmB,GAAG,CAAC,QAAgB,EAAE,QAAgB,EAAE,EAAE,CACxE,IAAI,CAAC,KAAK,CAAC,CAAC,CAAC,QAAQ,GAAG,QAAQ,CAAC,GAAG,QAAQ,CAAC,GAAG,GAAG,CAAC,CAAC;AAD1C,QAAA,mBAAmB,uBACuB"}

@@ -1,0 +1,349 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Categories {
+  id          String               @id @default(cuid())
+  name        String               @unique
+  slug        String               @unique
+  image       String
+  numberSort  Int                  @map("number_sort")
+  description String
+  createdAt   DateTime             @default(now()) @map("created_at")
+  updatedAt   DateTime             @updatedAt @map("updated_at")
+  products    Products[]
+  attributes  CategoryAttributes[]
+
+  @@map("categories")
+}
+
+model CategoryAttributes {
+  id         String        @id @default(cuid())
+  name       String
+  type       AttributeType
+  filterable Boolean       @default(true)
+  options    String[]
+
+  categoryId String     @map("category_id")
+  category   Categories @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdAt  DateTime   @default(now()) @map("created_at")
+  updatedAt  DateTime   @updatedAt @map("updated_at")
+
+  productAttributes ProductAttributes[]
+
+  @@map("category_attributes")
+}
+
+model Products {
+  id               String   @id @default(cuid())
+  name             String   @unique
+  slug             String   @unique
+  description      String
+  images           String[]
+  stock            Int      @default(0)
+  discount         Int      @default(0)
+  purchaseCount    Int      @default(0) @map("purchase_count")
+  ordersCount      Int      @default(0) @map("orders_count")
+  price            Float
+  oldPrice         Float?   @map("old_price")
+  percentageChange Int?     @map("percentage_change")
+
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  updatedPriceAt DateTime? @map("updated_price_at")
+
+  categoryId String     @map("category_id")
+  category   Categories @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  attributes ProductAttributes[]
+
+  favorites     Favorites[]
+  orderItems    OrderItems[]
+  priceHistory  PriceHistory[]
+  reviews       Reviews[]
+  promoProducts PromoProducts[]
+
+  @@map("products")
+}
+
+model ProductAttributes {
+  id                  String             @id @default(cuid())
+  title               String
+  value               String
+  productId           String             @map("product_id")
+  product             Products           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  categoryAttributeId String             @map("category_attribute_id")
+  categoryAttribute   CategoryAttributes @relation(fields: [categoryAttributeId], references: [id], onDelete: Cascade)
+  createdAt           DateTime           @default(now()) @map("created_at")
+  updatedAt           DateTime           @updatedAt @map("updated_at")
+
+  @@map("product_attributes")
+}
+
+model PriceHistory {
+  id String @id @default(cuid())
+
+  oldPrice         Float @map("old_price")
+  newPrice         Float @map("new_price")
+  percentageChange Int   @map("percentage_change")
+  priceChange      Float @map("price_change")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  productId String   @map("product_id")
+  product   Products @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("price_history")
+}
+
+model Favorites {
+  id        String   @id @default(cuid())
+  productId String   @map("product_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  product Products @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  userId String @map("user_id")
+  user   Users  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("favorites")
+}
+
+model Users {
+  id          String    @id @default(cuid())
+  firstName   String?   @map("first_name")
+  lastName    String?   @map("last_name")
+  surName     String?   @map("sur_name")
+  email       String    @unique
+  phone       String?   @unique
+  gender      Gender?
+  dateOfBirth DateTime? @map("date_of_birth")
+  password    String
+  address     String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  role        UserRole  @default(USER)
+
+  favorites Favorites[]
+  orders    Orders[]
+  reviews   Reviews[]
+
+  @@map("users")
+}
+
+model Orders {
+  id              String               @id @default(cuid())
+  publicId        String               @unique @map("public_id")
+  total           Float                @default(0)
+  discount        Float                @default(0) // Скидка на товары
+  manualDiscount  Float                @default(0) @map("manual_discount") // Ручная скидка в деньгах
+  percentDiscount Float                @default(0) @map("percent_discount") // Процентная скидка (например, 10%)
+  quantity        Int                  @default(0)
+  originalTotal   Float                @default(0) @map("original_total")
+  type            OrderType
+  status          OrderStatus?
+  completed       Boolean              @default(false)
+  completedDate   DateTime?            @map("completed_date")
+  expectedDate    DateTime?            @map("expected_date")
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @updatedAt @map("updated_at")
+  address         String?              @map("address")
+  comment         String?              @map("comment")
+  deliveryMethod  OrderDeliveryMethod? @map("delivery_method")
+  paymentMethod   OrderPaymentMethod?  @map("payment_method")
+
+  orderItems OrderItems[]
+
+  userId String? @map("user_id")
+  user   Users?  @relation(fields: [userId], references: [id])
+
+  userInfo   UserInfo? @relation(fields: [userInfoId], references: [id], onDelete: Cascade)
+  userInfoId String?   @unique @map("user_info_id")
+
+  orderStatusHistory OrderStatusHistory[]
+
+  @@map("orders")
+}
+
+model OrderStatusHistory {
+  id        String      @id @default(cuid())
+  orderId   String      @map("order_id")
+  status    OrderStatus
+  changedAt DateTime    @default(now()) @map("changed_at")
+
+  order Orders @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("order_status_history")
+}
+
+model UserInfo {
+  id        String @id @default(cuid())
+  firstName String @map("first_name")
+  lastName  String @map("last_name")
+  email     String @map("email")
+  phone     String @map("phone")
+
+  order Orders? // Связь уже объявлена в Orders
+
+  @@map("user_info")
+}
+
+model OrderItems {
+  id                 String @id @default(cuid())
+  orderId            String @map("order_id")
+  productId          String @map("product_id")
+  quantity           Int    @default(1)
+  discount           Float?
+  totalDiscount      Float? @map("total_discount")
+  unitPrice          Float? @map("unit_price")
+  totalPrice         Float? @map("total_price")
+  originalPrice      Float? @map("original_price")
+  totalOriginalPrice Float? @map("total_original_price")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  order     Orders   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Products @relation(fields: [productId], references: [id], onDelete: SetDefault)
+
+  @@map("order_items")
+}
+
+model Reviews {
+  id        String   @id @default(cuid())
+  productId String   @map("product_id")
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  userId    String   @map("user_id")
+  product   Products @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("reviews")
+}
+
+model Banner {
+  id          String  @id @default(cuid())
+  title       String
+  description String?
+  link        String?
+  position    Int
+  isActive    Boolean @default(true) @map("is_active")
+
+  imageLG String @map("image_lg")
+  imageMD String @map("image_md")
+  imageSM String @map("image_sm")
+
+  textColor       String? @default("#000000") @map("text_color")
+  buttonBG        String? @default("#000000") @map("button_bg")
+  buttonTextColor String? @default("#FFFFFF") @map("button_text_color")
+
+  startDate DateTime? @map("start_date")
+  endDate   DateTime? @map("end_date")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  @@map("banners")
+}
+
+model Promo {
+  id          String  @id @default(cuid())
+  title       String
+  slug        String  @unique
+  description String?
+  content     String?
+  link        String?
+  isActive    Boolean @default(true) @map("is_active")
+
+  image String @map("image")
+
+  startDate DateTime? @map("start_date")
+  endDate   DateTime? @map("end_date")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  products PromoProducts[]
+
+  @@map("promotions")
+}
+
+model PromoProducts {
+  promo   Promo  @relation(fields: [promoId], references: [id], onDelete: Cascade)
+  promoId String @map("promo_id")
+
+  product   Products @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String   @map("product_id")
+
+  @@id([promoId, productId]) // Уникальность пары (акция + товар)
+  @@map("promo_products")
+}
+
+model ReviewsInstagram {
+  id       String  @id @default(cuid())
+  name     String
+  nick     String
+  image    String
+  position Int
+  isActive Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("reviews_instagram")
+}
+
+enum AttributeType {
+  STRING
+  NUMBER
+  BOOLEAN
+  SELECT
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum OrderType {
+  CART
+  CHECKOUT
+  ORDER
+}
+
+enum OrderPaymentMethod {
+  TRANSFER
+  KASPI
+}
+
+enum OrderDeliveryMethod {
+  YANDEX
+  KAZPOCHTA
+}
+
+enum OrderStatus {
+  CREATED
+  AWAITING_PAYMENT
+  PAID
+  PROCESSING
+  AWAITING_SHIPMENT
+  SHIPPED
+  DELIVERED
+  COMPLETED
+  RETURNED
+  AWAITING_RETURN
+  RETURN_PROCESSED
+  CANCELLED
+}
