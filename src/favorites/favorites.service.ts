@@ -158,8 +158,6 @@ export class FavoritesService {
   }
 
   async delete(userId: string, dto: CreateFavoritesDto) {
-    console.log(dto, userId);
-
     const favorite = await this.prisma.favorites.findFirst({
       where: {
         userId,

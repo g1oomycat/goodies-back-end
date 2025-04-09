@@ -10,6 +10,7 @@ import { Prisma, UserRole } from '@prisma/client';
 import { hash } from 'argon2';
 import { Response } from 'express';
 import { AuthService } from 'src/auth/auth.service';
+import { CartService } from 'src/cart/cart.service';
 import { DeleteBulkDto } from 'src/common/dto/delete-bulk';
 import { IParamsSort } from 'src/common/types/sort';
 import { GetSkipAndPage } from 'src/common/utils/get-skip-and-take';
@@ -26,6 +27,7 @@ export class UsersService {
     private prisma: PrismaService,
     @Inject(forwardRef(() => AuthService))
     private authService: AuthService,
+    private cartService: CartService,
   ) {}
 
   async getOne(
@@ -112,7 +114,7 @@ export class UsersService {
     const user = await this.prisma.users.create({
       data: { ...dto, password: await hash(dto.password) },
     });
-
+    await this.cartService.create(user.id);
     const { password, ...userWithoutPassword } = user;
     return userWithoutPassword;
   }
@@ -127,7 +129,7 @@ export class UsersService {
     const user = await this.prisma.users.create({
       data: { ...dto, password: await hash(dto.password) },
     });
-
+    await this.cartService.create(user.id);
     const { password, ...userWithoutPassword } = user;
     return userWithoutPassword;
   }
@@ -140,8 +142,6 @@ export class UsersService {
     const currentUser = await this.getOne(id, 'id');
     // Проверка прав пользователя при админском обновлении
     if (dto instanceof UpdateUserByAdminDto && adminRole) {
-      console.log(adminRole);
-
       this.validateRole(currentUser.role, adminRole);
       if (dto.password) {
         dto.password = await hash(dto.password);

@@ -105,9 +105,12 @@ export class BannersService {
     let currentBanner: Banner | null = null;
     try {
       currentBanner = await this.getOne(id);
+
       let isActive: boolean = dto.isActive ?? currentBanner.isActive;
+
       if (dto.startDate && new Date(dto.startDate) >= now) isActive = false;
       if (dto.endDate && new Date(dto.endDate) <= now) isActive = false;
+
       const updatedBanner = await this.prisma.banner.update({
         where: {
           id,
@@ -132,15 +135,12 @@ export class BannersService {
       if (imagesToDelete.length) {
         await this.S3Service.deleteFileByUrlBulk(imagesToDelete);
       }
-      console.log('банер есть');
+
       return updatedBanner;
     } catch (error) {
-      console.log('словили ошибку');
-
       if (dto.imageLG || dto.imageMD || dto.imageSM) {
         try {
           if (currentBanner) {
-            console.log('ошибка и банер есть');
             const imagesToDelete = [
               dto.imageLG !== currentBanner.imageLG
                 ? (dto.imageLG ?? null)
@@ -157,7 +157,6 @@ export class BannersService {
               await this.S3Service.deleteFileByUrlBulk(imagesToDelete);
             }
           } else {
-            console.log('ошибка и банера нет');
             const imagesToDelete = [
               dto?.imageLG ?? null,
               dto?.imageMD ?? null,

@@ -9,7 +9,6 @@ import { JwtService } from '@nestjs/jwt';
 import { UserRole } from '@prisma/client';
 import { verify } from 'argon2';
 import { Response } from 'express';
-import { CartService } from 'src/cart/cart.service';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { UsersService } from 'src/users/users.service';
 
@@ -26,7 +25,6 @@ export class AuthService {
     private jwt: JwtService,
     @Inject(forwardRef(() => UsersService)) // Use forwardRef to handle circular dependency
     private usersService: UsersService,
-    private cartService: CartService,
   ) {}
 
   async adminLogin(dto: CreateUserDto) {
@@ -49,7 +47,7 @@ export class AuthService {
   async register(dto: CreateUserDto) {
     const user = await this.usersService.create(dto);
     const tokens = this.issueTokens(user.id, user.role);
-    await this.cartService.create(user.id);
+
     return {
       user,
       ...tokens,
@@ -118,7 +116,7 @@ export class AuthService {
     );
     res.cookie(this.REFRESH_TOKEN_NAME, refreshToken, {
       httpOnly: true,
-      domain: 'localhost',
+      domain: process.env.DOMAIN,
       expires: expiresIn,
       secure: true,
       sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'none',
@@ -127,7 +125,7 @@ export class AuthService {
   removeRefreshTokenToResponse(res: Response) {
     res.cookie(this.REFRESH_TOKEN_NAME, '', {
       httpOnly: true,
-      domain: 'localhost',
+      domain: process.env.DOMAIN,
       expires: new Date(0),
       secure: true,
       sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'none',

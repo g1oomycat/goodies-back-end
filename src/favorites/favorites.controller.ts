@@ -54,8 +54,6 @@ export class FavoritesController {
     @CurrentUser('id') userId: string,
     @Body() dto: CreateFavoritesDto,
   ) {
-    console.log('del-product');
-
     return this.favoritesService.delete(userId, dto);
   }
 }
