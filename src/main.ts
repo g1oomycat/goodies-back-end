@@ -4,6 +4,27 @@ import { NestFactory } from '@nestjs/core';
 import * as cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 
+// 👇 Этот хелпер загружает переменные из *_FILE
+// function loadSecretsFromFiles() {
+//   Object.keys(process.env).forEach((key) => {
+//     console.log(key, 'key');
+
+//     if (key.endsWith('_FILE')) {
+//       const realKey = key.slice(0, -5);
+//       const filePath = process.env[key];
+//       console.log(realKey, 'realKey');
+
+//       if (filePath && fs.existsSync(filePath)) {
+//         process.env[realKey] = fs.readFileSync(filePath, 'utf8').trim();
+//         console.log(process.env[realKey], 'process.env[realKey]');
+//       }
+//     }
+//   });
+// }
+
+// 👇 Вызови перед стартом приложения
+// loadSecretsFromFiles();
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 

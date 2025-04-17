@@ -192,7 +192,7 @@ model OrderItems {
   originalPrice      Float?   @map("original_price")
   totalOriginalPrice Float?   @map("total_original_price")
   order              Orders   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product            Products @relation(fields: [productId], references: [id], onDelete: SetDefault)
+  product            Products @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@map("order_items")
 }

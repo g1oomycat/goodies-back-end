@@ -79,7 +79,6 @@ export class UploadsService {
           entityType === 'bannersSM'
             ? 6
             : 3;
-        console.log(effort);
 
         await sharpInstance
           .webp({ effort, quality: effort === 6 ? 90 : 80 })

@@ -34,7 +34,7 @@ WORKDIR /app
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/.env .env
+# COPY --from=builder /app/.env .env
 
 # Если нужен Prisma клиент, копируем его
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
@@ -43,5 +43,10 @@ COPY --from=builder /app/prisma ./prisma
 ENV NODE_ENV=production
 EXPOSE 4200
 
-CMD ["dumb-init", "sh", "-c", "npx prisma migrate deploy && node dist/src/main"]
+COPY entry.sh /app/entry.sh
+RUN chmod +x /app/entry.sh
+
+# Start the application using the entry script
+CMD ["/app/entry.sh"]
+# CMD ["dumb-init", "sh", "-c", "npx prisma migrate deploy && node dist/src/main"]
 

@@ -101,7 +101,6 @@ export class OrdersService {
         ? { userInfo: { phone: { contains: phone, mode: 'insensitive' } } }
         : {}),
     };
-    console.log(where);
 
     const orderBy: Prisma.OrdersOrderByWithRelationInput = sortBy
       ? { [sortBy]: sort }

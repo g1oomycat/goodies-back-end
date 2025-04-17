@@ -91,9 +91,6 @@ export class S3Service {
       const url = new URL(fileUrl);
       const key = decodeURIComponent(url.pathname.substring(1)); // убираем первый "/"
 
-      console.log('Полный URL:', fileUrl);
-      console.log('Parsed path:', url.pathname);
-      console.log('Extracted Key:', key);
       await this.s3Client.send(
         new DeleteObjectCommand({
           Bucket: this.bucketName,
@@ -109,8 +106,6 @@ export class S3Service {
   }
   async deleteFileByUrlBulk(filesUrl: string[]): Promise<void[]> {
     try {
-      console.log(filesUrl);
-
       const deletePromises = filesUrl.map((file) => this.deleteFileByUrl(file));
       return await Promise.all(deletePromises);
     } catch (error) {

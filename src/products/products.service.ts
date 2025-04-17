@@ -282,13 +282,13 @@ export class ProductsService {
       throw new NotFoundException('Некоторые товары не найдены');
     }
     const images = productsImages.flatMap((el) => el.images);
-    // Сначала удаляем файлы в S3
-    await this.S3Service.deleteFileByUrlBulk(images);
 
     // Потом удаляем продукты
-    return this.prisma.products.deleteMany({
+    await this.prisma.products.deleteMany({
       where: { id: { in: ids } },
     });
+    // Сначала удаляем файлы в S3
+    await this.S3Service.deleteFileByUrlBulk(images);
   }
 
   async updateProductMetrics(id: string, dto: UpdateProductMetricsDto) {

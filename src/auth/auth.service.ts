@@ -119,7 +119,7 @@ export class AuthService {
       domain: process.env.DOMAIN,
       expires: expiresIn,
       secure: true,
-      sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'none',
+      sameSite: 'none',
     });
   }
   removeRefreshTokenToResponse(res: Response) {
@@ -128,7 +128,7 @@ export class AuthService {
       domain: process.env.DOMAIN,
       expires: new Date(0),
       secure: true,
-      sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'none',
+      sameSite: 'none',
     });
   }
 }
