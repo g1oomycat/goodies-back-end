@@ -33,4 +33,4 @@ fi
 
 # Запуск приложения
 echo "🚀 Запуск приложения"
-exec node dist/src/main.js
+exec node dist/main.js
