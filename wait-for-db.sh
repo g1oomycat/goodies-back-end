@@ -12,6 +12,6 @@ echo "Database is up. Running Prisma migration and seed..."
 
 # Запускаем переданную в CMD команду (например, npm run start:prod)
 npx prisma migrate deploy
-npx prisma db seed
+# npx prisma db seed
 
 node dist/main.js
