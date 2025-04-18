@@ -19,7 +19,7 @@ RUN npx prisma generate
 # Сборка проекта (NestJS)
 RUN npm run build
 
-
+RUN find /app/dist -name "main.js" || (echo "❌ main.js not found!" && exit 1)
 # ========== STAGE 2: Production ==========
 FROM node:20.11.1-slim AS production
 
