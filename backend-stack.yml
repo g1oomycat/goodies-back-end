@@ -52,6 +52,11 @@ services:
         order: start-first
       restart_policy:
         condition: on-failure
+    healthcheck:
+      test: ['CMD', 'pg_isready']
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   backend:
     image: ghcr.io/g1oomycat/goodies-backend:latest

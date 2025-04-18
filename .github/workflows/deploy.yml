@@ -6,83 +6,44 @@ on:
       - main # или любая ветка, для которой запускается deploy
 
 jobs:
-  build-backend:
-    name: Build and Push Backend
-    runs-on: ubuntu-24.04
+  build-and-push:
+    runs-on: ubuntu-latest
     steps:
-      # Клонируем репозиторий (checkout)
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Логин в Docker Hub
-      - name: Log in to Docker Hub
+      - name: Log in to GitHub Container Registry
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Собираем и пушим образ бекенда
-      - name: Build Backend Docker Image
-        run: |
-          docker build \
-            --pull \
-            --rm \
-            -f nazym-online-shop-back/Dockerfile \
-            -t yourdockerhubusername/goodies-back-end:latest \
-            --build-arg DATABASE_URL=${{ secrets.DATABASE_URL }} \
-            nazym-online-shop-back
-      - name: Push Backend Docker Image
-        run: |
-          docker push yourdockerhubusername/goodies-back-end:latest
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/g1oomycat/goodies-backend:latest
+            ghcr.io/g1oomycat/goodies-backend:${{ github.sha }}
 
-  build-frontend:
-    name: Build and Push Frontend
-    runs-on: ubuntu-24.04
-    needs: build-backend # Гарантирует, что бекенд собран и запушен
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-push
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
+      - name: Create env file with commit hash
+        run: echo "GIT_COMMIT_HASH=${{ github.sha }}" >> ./envfile
+
+      - name: Docker stack deploy
+        uses: cssnr/stack-deploy-action@v1
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      # Собираем и пушим образ фронтенда
-      - name: Build Frontend Docker Image
-        run: |
-          docker build \
-            --pull \
-            --rm \
-            -f nazym-online-shop-front/Dockerfile \
-            -t yourdockerhubusername/goodies-front-end:latest \
-            --build-arg BASE_URL=${{ secrets.BASE_URL }} \
-            nazym-online-shop-front
-      - name: Push Frontend Docker Image
-        run: |
-          docker push yourdockerhubusername/goodies-front-end:latest
-
-  # deploy:
-  #   name: Deploy to VPS
-  #   runs-on: ubuntu-latest
-  #   needs: build-frontend
-  #   steps:
-  #     - name: Checkout deploy repository
-  #       uses: actions/checkout@v3
-  #       with:
-  #         # Если вы храните ваш docker-compose.yml для деплоя в этом же репозитории,
-  #         # можно указать путь к нему.
-  #         path: deploy
-
-  #     - name: Deploy via SSH
-  #       uses: appleboy/ssh-action@master
-  #       with:
-  #         host: ${{ secrets.VPS_HOST }}
-  #         username: ${{ secrets.VPS_USER }}
-  #         key: ${{ secrets.VPS_SSH_KEY }}
-  #         port: ${{ secrets.VPS_PORT }}
-  #         script: |
-  #           cd /path/to/compose-directory
-  #           docker-compose pull
-  #           docker-compose up -d --build
+          name: goodies
+          file: backend-stack.yml
+          host: ${{ secrets.VPS_HOST }}
+          user: ${{ secrets.VPS_USER }}
+          ssh_key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+          env_file: ./envfile
