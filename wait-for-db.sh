@@ -14,4 +14,4 @@ echo "Database is up. Running Prisma migration and seed..."
 npx prisma migrate deploy
 npx prisma db seed
 
-npm node dist/src.js
+node dist/src/main.js
