@@ -1,0 +1,114 @@
+version: '3.8'
+
+services:
+  traefik:
+    image: traefik:v2.11
+    command:
+      # - '--api.insecure=true'
+      - '--providers.docker.swarmMode=true'
+      - '--providers.docker.exposedbydefault=false'
+      - '--entrypoints.web.address=:80'
+      - '--entrypoints.websecure.address=:443'
+      - '--entrypoints.web.http.redirections.entrypoint.to=websecure'
+      - '--entrypoints.web.http.redirections.entrypoint.scheme=https'
+      - '--certificatesresolvers.letsencrypt.acme.httpchallenge=true'
+      - '--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web'
+      - '--certificatesresolvers.letsencrypt.acme.email=misi228@mail.ru'
+      - '--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json'
+
+    ports:
+      - '80:80'
+      - '443:443'
+      # - '8080:8080'
+    volumes:
+      - traefik_letsencrypt:/letsencrypt
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+    networks:
+      - default
+      - goodies_overlay
+
+  db:
+    image: postgres:latest
+    secrets:
+      - pg_user
+      - pg_password
+      - pg_db
+    environment:
+      - POSTGRES_USER_FILE=/run/secrets/pg_user
+      - POSTGRES_PASSWORD_FILE=/run/secrets/pg_password
+      - POSTGRES_DB_FILE=/run/secrets/pg_db
+      - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 5s
+        order: start-first
+      restart_policy:
+        condition: on-failure
+
+  backend:
+    image: ghcr.io/g1oomycat/goodies-backend:latest
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+      restart_policy:
+        condition: on-failure
+      labels:
+        - 'traefik.enable=true'
+        - 'traefik.http.routers.backend.rule=Host(`api.goodies-shop.kz`)'
+        - 'traefik.http.routers.backend.entrypoints=websecure'
+        - 'traefik.http.routers.backend.tls.certresolver=letsencrypt'
+        - 'traefik.http.services.backend.loadbalancer.server.port=4200'
+    secrets:
+      - database_url
+      - jwt_secret
+      - aws_access_key_id
+      - aws_secret_access_key
+      - aws_region
+      - aws_bucket_name
+    environment:
+      DOMAIN: .goodies-shop.kz
+      CORS_ORIGIN: https://goodies-shop.kz
+    networks:
+      - default
+
+volumes:
+  pgdata:
+    external: true
+  traefik_letsencrypt:
+
+secrets:
+  pg_user:
+    external: true
+  pg_password:
+    external: true
+  pg_db:
+    external: true
+  database_url:
+    external: true
+  jwt_secret:
+    external: true
+  aws_access_key_id:
+    external: true
+  aws_secret_access_key:
+    external: true
+  aws_region:
+    external: true
+  aws_bucket_name:
+    external: true
+
+networks:
+  default:
+    driver: overlay
+  goodies_overlay:
+    external: true

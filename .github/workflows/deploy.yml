@@ -1,0 +1,88 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - main # или любая ветка, для которой запускается deploy
+
+jobs:
+  build-backend:
+    name: Build and Push Backend
+    runs-on: ubuntu-24.04
+    steps:
+      # Клонируем репозиторий (checkout)
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Логин в Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Собираем и пушим образ бекенда
+      - name: Build Backend Docker Image
+        run: |
+          docker build \
+            --pull \
+            --rm \
+            -f nazym-online-shop-back/Dockerfile \
+            -t yourdockerhubusername/goodies-back-end:latest \
+            --build-arg DATABASE_URL=${{ secrets.DATABASE_URL }} \
+            nazym-online-shop-back
+      - name: Push Backend Docker Image
+        run: |
+          docker push yourdockerhubusername/goodies-back-end:latest
+
+  build-frontend:
+    name: Build and Push Frontend
+    runs-on: ubuntu-24.04
+    needs: build-backend # Гарантирует, что бекенд собран и запушен
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Собираем и пушим образ фронтенда
+      - name: Build Frontend Docker Image
+        run: |
+          docker build \
+            --pull \
+            --rm \
+            -f nazym-online-shop-front/Dockerfile \
+            -t yourdockerhubusername/goodies-front-end:latest \
+            --build-arg BASE_URL=${{ secrets.BASE_URL }} \
+            nazym-online-shop-front
+      - name: Push Frontend Docker Image
+        run: |
+          docker push yourdockerhubusername/goodies-front-end:latest
+
+  # deploy:
+  #   name: Deploy to VPS
+  #   runs-on: ubuntu-latest
+  #   needs: build-frontend
+  #   steps:
+  #     - name: Checkout deploy repository
+  #       uses: actions/checkout@v3
+  #       with:
+  #         # Если вы храните ваш docker-compose.yml для деплоя в этом же репозитории,
+  #         # можно указать путь к нему.
+  #         path: deploy
+
+  #     - name: Deploy via SSH
+  #       uses: appleboy/ssh-action@master
+  #       with:
+  #         host: ${{ secrets.VPS_HOST }}
+  #         username: ${{ secrets.VPS_USER }}
+  #         key: ${{ secrets.VPS_SSH_KEY }}
+  #         port: ${{ secrets.VPS_PORT }}
+  #         script: |
+  #           cd /path/to/compose-directory
+  #           docker-compose pull
+  #           docker-compose up -d --build
