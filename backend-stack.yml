@@ -54,7 +54,7 @@ services:
         condition: on-failure
 
   backend:
-    image: ghcr.io/g1oomycat/goodies-backend:latest
+    image: ghcr.io/g1oomycat/goodies-backend:${GIT_COMMIT_HASH:-latest}
     deploy:
       replicas: 1
       update_config:
