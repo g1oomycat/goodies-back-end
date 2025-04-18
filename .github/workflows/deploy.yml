@@ -41,7 +41,7 @@ jobs:
       - name: Docker stack deploy
         uses: cssnr/stack-deploy-action@v1
         with:
-          with_registry_auth: true
+          args: --with-registry-auth
           name: goodies
           file: backend-stack.yml
           host: ${{ secrets.VPS_HOST }}
