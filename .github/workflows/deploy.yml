@@ -41,10 +41,10 @@ jobs:
       - name: Docker stack deploy
         uses: cssnr/stack-deploy-action@v1
         with:
+          with_registry_auth: true
           name: goodies
           file: backend-stack.yml
           host: ${{ secrets.VPS_HOST }}
           user: ${{ secrets.VPS_USER }}
           ssh_key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
           env_file: ./envfile
-          with_registry_auth: true
