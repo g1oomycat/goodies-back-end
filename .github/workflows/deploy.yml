@@ -27,12 +27,6 @@ jobs:
           tags: |
             ghcr.io/g1oomycat/goodies-backend:latest
             ghcr.io/g1oomycat/goodies-backend:${{ github.sha }}
-      - name: Check if 'latest' tag was pushed to GHCR
-        run: |
-          echo "🔍 Checking for 'latest' tag in GHCR..."
-          response=$(curl -s -u "${{ github.actor }}:${{ secrets.GHCR_PAT }}" https://ghcr.io/v2/g1oomycat/goodies-backend/tags/list)
-          echo "$response" | jq .
-          echo "$response" | grep '"latest"' > /dev/null || (echo "❌ ERROR: Tag 'latest' not found in GHCR!" && exit 1)
 
   deploy:
     runs-on: ubuntu-latest
