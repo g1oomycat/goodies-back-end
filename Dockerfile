@@ -42,6 +42,7 @@ COPY --from=builder /app/prisma ./prisma
 
 ENV NODE_ENV=production
 EXPOSE 4200
+RUN echo "🔥 force rebuild $(date +%s)"
 
 COPY entry.sh /app/entry.sh
 RUN chmod +x /app/entry.sh
