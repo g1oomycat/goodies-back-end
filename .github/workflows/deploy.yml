@@ -27,6 +27,10 @@ jobs:
           tags: |
             ghcr.io/g1oomycat/goodies-backend:latest
             ghcr.io/g1oomycat/goodies-backend:${{ github.sha }}
+      - name: Check if 'latest' tag was pushed to GHCR
+        run: |
+          curl -s -H "Authorization: Bearer ${{ secrets.GHCR_PAT }}" \
+          https://ghcr.io/v2/g1oomycat/goodies-backend/tags/list | jq .
 
   deploy:
     runs-on: ubuntu-latest
